@@ -1,9 +1,25 @@
+# Node
+node_modules/
+package-lock.json
+npm-debug.log*
+*.tgz
+coverage/
+.nyc_output/
+
+# Python (parity harness vendored source)
 *.pyc
-.tox
-*.egg
-*.egg-info
-.mypy_cache/
-.eggs/
-.pytest_cache/
-dist/
-poetry.lock
+__pycache__/
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# Task scaffolding artifacts (not part of the repo)
+golden.patch
+test.patch
+truth.md
+instruction.md
+fix.patch

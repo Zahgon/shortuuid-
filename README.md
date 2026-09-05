@@ -1,209 +1,116 @@
-Description
-===========
+# shortuuid (JavaScript)
 
-`shortuuid` is a simple python library that generates concise, unambiguous, URL-safe
-UUIDs.
+JavaScript port of [shortuuid](https://github.com/skorokithakis/shortuuid): concise,
+unambiguous, URL-safe UUIDs. Pure ESM, no runtime dependencies, Node >= 18.
 
-Often, one needs to use non-sequential IDs in places where users will see them, but the
-IDs must be as concise and easy to use as possible.  `shortuuid` solves this problem by
-generating uuids using Python's built-in `uuid` module and then translating them to
-base57 using lowercase and uppercase letters and digits, and removing similar-looking
-characters such as l, 1, I, O and 0.
+`shortuuid` generates UUIDs using the platform's `uuid` facilities and translates them
+to base57 using lowercase and uppercase letters and digits, removing similar-looking
+characters such as `l`, `1`, `I`, `O` and `0`.
 
+The port is validated against the Python implementation itself: a golden corpus of 2926
+deterministic cases (encode, decode, padding, alphabets, `int_to_string`/`string_to_int`
+and v5 `uuid(name=...)`) is replayed and compared exactly.
 
-Installation
-------------
+## Install
 
-To install `shortuuid` you need:
-
--   Python 3.6+
-
-If you have the dependencies, you have multiple options of installation:
-
--   With pip (preferred), do `pip install shortuuid`.
--   With setuptools, do `easy_install shortuuid`.
--   To install the source, download it from
-    https://github.com/stochastic-technologies/shortuuid and run `python setup.py
-    install`.
-
-
-Usage
------
-
-To use `shortuuid`, just import it in your project like so:
-
-```python
->>> import shortuuid
-```
-
-You can then generate a short UUID:
-
-```python
->>> shortuuid.uuid()
-'vytxeTZskVKR7C7WgdSP3d'
-```
-
-If you prefer a version 5 UUID, you can pass a name (DNS or URL) to the call and it will
-be used as a namespace (`uuid.NAMESPACE_DNS` or `uuid.NAMESPACE_URL`) for the resulting
-UUID:
-
-```python
->>> shortuuid.uuid(name="example.com")
-'exu3DTbj2ncsn9tLdLWspw'
-
->>> shortuuid.uuid(name="<http://example.com>")
-'shortuuid.uuid(name="<http://example.com>")'
-```
-
-You can also generate a cryptographically secure random string (using `os.urandom()`
-internally) with:
-
-```python
->>> shortuuid.ShortUUID().random(length=22)
-'RaF56o2r58hTKT7AYS9doj'
-```
-
-To see the alphabet that is being used to generate new UUIDs:
-
-```python
->>> shortuuid.get_alphabet()
-'23456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
-```
-
-If you want to use your own alphabet to generate UUIDs, use `set_alphabet()`:
-
-```python
->>> shortuuid.set_alphabet("aaaaabcdefgh1230123")
->>> shortuuid.uuid()
-'0agee20aa1hehebcagddhedddc0d2chhab3b'
-```
-
-The default alphabet matches the regex `[2-9A-HJ-NP-Za-km-z]{22}`.
-
-`shortuuid` will automatically sort and remove duplicates from your alphabet to ensure
-consistency:
-
-```python
->>> shortuuid.get_alphabet()
-'0123abcdefgh'
-```
-
-You can prevent the alphabet from being sorted by passing the `dont_sort_alphabet`
-keyword argument to `set_alphabet()`. This option ensures compatibility with different
-implementations of ShortUUID:
-
-```python
->>> shortuuid.set_alphabet("aaaaabcdefgh1230123", dont_sort_alphabet=True)
->>> shortuuid.get_alphabet()
-'abcdefgh1230'
-```
-
-If the default 22 digits are too long for you, you can get shorter IDs by just
-truncating the string to the desired length. The IDs won't be universally unique any
-longer, but the probability of a collision will still be very low.
-
-To serialize existing UUIDs, use `encode()` and `decode()`:
-
-```python
->>> import uuid
->>> u = uuid.uuid4()
->>> u
-UUID('6ca4f0f8-2508-4bac-b8f1-5d1e3da2247a')
-
->>> s = shortuuid.encode(u)
->>> s
-'MLpZDiEXM4VsUryR9oE8uc'
-
->>> shortuuid.decode(s) == u
-True
-
->>> short = s[:7]
->>> short
-'MLpZDiE'
-
->>> h = shortuuid.decode(short)
-UUID('00000000-0000-0000-0000-009a5b27f8b9')
-
->>> shortuuid.decode(shortuuid.encode(h)) == h
-True
-```
-
-
-Class-based usage
------------------
-
-If you need to have various alphabets per-thread, you can use the `ShortUUID` class,
-like so:
-
-```python
->>> su = shortuuid.ShortUUID(alphabet="01345678")
->>> su.uuid()
-'034636353306816784480643806546503818874456'
-
->>> su.get_alphabet()
-'01345678'
-
->>> su.set_alphabet("21345687654123456")
->>> su.get_alphabet()
-'12345678'
-```
-
-
-Command-line usage
-------------------
-
-`shortuuid` provides a simple way to generate a short UUID in a terminal:
+There is no published npm package; use it from a checkout.
 
 ```bash
-$ shortuuid
-fZpeF6gcskHbSpTgpQCkcJ
+npm test          # run the ported unit suite
+npm run parity    # replay the golden corpus against the port
+npm run verify    # build + test + parity
 ```
 
-
-Django field
-------------
-
-`shortuuid` includes a Django field that generates random short UUIDs by default, for
-your convenience:
-
-```python
-from shortuuid.django_fields import ShortUUIDField
-
-class MyModel(models.Model):
-    # A primary key ID of length 16 and a short alphabet.
-    id = ShortUUIDField(
-        length=16,
-        max_length=40,
-        prefix="id_",
-        alphabet="abcdefg1234",
-        dont_sort_alphabet=False,
-        primary_key=True,
-    )
-
-    # A short UUID of length 22 and the default alphabet.
-    api_key = ShortUUIDField()
+```js
+import shortuuid, { ShortUUID } from './src/shortuuid.js';
 ```
 
-The field is the same as the `CharField`, with a `length` argument (the length of the
-ID), an `alphabet` argument, and the `default` argument removed. Everything else is
-exactly the same, e.g. `index`, `help_text`, `max_length`, etc.
+## Quick usage
 
+```js
+import { uuid, encode, decode, getAlphabet, setAlphabet } from 'shortuuid-js';
+import { UUID, uuid4 } from 'shortuuid-js/uuid';
 
-Compatibility note
-------------------
+uuid();                       // 'vytxeTZskVKR7C7WgdSP3d'
+uuid('example.com');          // v5 UUID in the DNS namespace -> short string
 
-Versions of ShortUUID prior to 1.0.0 generated UUIDs with their MSB last, i.e. reversed.
-This was later fixed, but if you have some UUIDs stored as a string with the old method,
-you need to pass `legacy=True` to `decode()` when converting your strings back to UUIDs.
+const u = uuid4();
+decode(encode(u)).equals(u);  // true
 
-That option will go away in the future, so you will want to convert your UUIDs to
-strings using the new method. This can be done like so:
-
-```python
->>> new_uuid_str = encode(decode(old_uuid_str, legacy=True))
+getAlphabet();                // '23456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
 ```
 
-License
--------
+Class-based usage, for per-instance alphabets:
 
-`shortuuid` is distributed under the BSD license.
+```js
+import { ShortUUID } from 'shortuuid-js';
+
+const su = new ShortUUID('01345678');
+su.uuid();
+su.getAlphabet();             // '01345678'
+```
+
+Command-line:
+
+```bash
+node src/cli-bin.js                                   # random short UUID
+node src/cli-bin.js encode 3b1f8b40-222c-4a6e-b77e-779d5a94e21c
+node src/cli-bin.js decode CXc85b4rqinB7s5J52TRYb
+node src/cli-bin.js decode --legacy <shortuuid>       # pre-1.0.0 (reversed) strings
+```
+
+## API mapping
+
+Names are camelCased and Python keyword arguments become positional/optional arguments.
+Behaviour is otherwise identical.
+
+| Python | JavaScript |
+| --- | --- |
+| `shortuuid.uuid(name=None, pad_length=None)` | `uuid(name, padLength)` |
+| `shortuuid.encode(uuid, pad_length=None)` | `encode(uuid, padLength)` |
+| `shortuuid.decode(string, legacy=False)` | `decode(string, legacy)` |
+| `shortuuid.random(length=None)` | `random(length)` |
+| `shortuuid.get_alphabet()` / `set_alphabet(a, dont_sort_alphabet=False)` | `getAlphabet()` / `setAlphabet(a, dontSortAlphabet)` |
+| `ShortUUID(alphabet=None, dont_sort_alphabet=False)` | `new ShortUUID(alphabet, dontSortAlphabet)` |
+| `su.encoded_length(num_bytes=16)` | `su.encodedLength(numBytes)` |
+| `int_to_string(n, alphabet, padding=None)` | `intToString(n, alphabet, padding)` |
+| `string_to_int(s, alphabet, alphabet_index=None)` | `stringToInt(s, alphabet, alphabetIndex)` |
+| `uuid.UUID`, `uuid.uuid4`, `uuid.uuid5` | `UUID`, `uuid4`, `uuid5` (from `shortuuid-js/uuid`) |
+
+### Differences forced by the platform
+
+**128-bit values are carried as `BigInt`.** Python's `uuid.UUID.int` is an arbitrary
+precision integer; a JS `number` cannot hold 128 bits losslessly. The `UUID` class in
+[src/uuid.js](src/uuid.js) stores `.int` as a `BigInt`, so `encode`/`decode` are exact.
+
+**`uuid` is reimplemented, not imported.** Python relies on its standard-library `uuid`
+module. Node has `crypto.randomUUID` but no v5 or integer-view API matching Python's, so
+[src/uuid.js](src/uuid.js) provides a minimal RFC 4122 `UUID` (v4 via `crypto.randomBytes`,
+v5 via SHA-1 over the namespace + name, the DNS and URL namespaces, and a `.int` view).
+
+**Type checks raise `Error`.** Python raises `ValueError` on a non-`UUID` `encode`
+argument, a non-`str` `decode` argument, a single-symbol alphabet, or a character outside
+the alphabet. The port raises `Error` in the same places.
+
+## Tests
+
+```
+npm test
+```
+
+22 tests, a one-for-one port of the Python `unittest` suite
+(`shortuuid/test_shortuuid.py`): `LegacyShortUUIDTest`, `ClassShortUUIDTest`,
+`ShortUUIDPaddingTest`, `EncodingEdgeCasesTest`, `DecodingEdgeCasesTest`, and `CliTest`.
+
+## Verification against Python
+
+`npm run parity` replays [parity/corpus.tsv](parity/corpus.tsv) — 2926 cases produced by
+the reference Python `shortuuid` (see [parity/parity_dump.py](parity/parity_dump.py)) —
+through the port and compares every result at full precision. The corpus is generated
+from the exact upstream `master` source vendored under `parity/_vendor/`, because the
+last released version on PyPI (1.0.11) predates the `dont_sort_alphabet` and
+`alphabet_index` features this port targets.
+
+## License
+
+BSD-3-Clause; see COPYING.

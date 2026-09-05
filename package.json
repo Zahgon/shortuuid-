@@ -1,0 +1,39 @@
+{
+  "name": "shortuuid-js",
+  "version": "1.0.11",
+  "description": "Generate concise, unambiguous, URL-safe UUIDs - JavaScript port of shortuuid (https://github.com/skorokithakis/shortuuid)",
+  "keywords": [
+    "shortuuid",
+    "uuid",
+    "short",
+    "url-safe",
+    "encode",
+    "decode",
+    "base57"
+  ],
+  "license": "BSD-3-Clause",
+  "type": "module",
+  "main": "./src/shortuuid.js",
+  "exports": {
+    ".": "./src/shortuuid.js",
+    "./uuid": "./src/uuid.js",
+    "./cli": "./src/cli.js"
+  },
+  "bin": {
+    "shortuuid": "./src/cli-bin.js"
+  },
+  "files": [
+    "src",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "node --check src/shortuuid.js && node --check src/uuid.js && node --check src/cli.js && node scripts/build-check.mjs",
+    "test": "node --test \"test/**/*.test.js\"",
+    "coverage": "node --test --experimental-test-coverage --test-coverage-exclude=\"test/**\" --test-coverage-exclude=\"parity/**\" --test-coverage-exclude=\"scripts/**\" \"test/**/*.test.js\"",
+    "parity": "node parity/replay.mjs parity/corpus.tsv",
+    "verify": "npm run build && npm test && npm run parity"
+  }
+}
